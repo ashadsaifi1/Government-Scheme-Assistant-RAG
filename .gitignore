@@ -1,0 +1,16 @@
+.env
+
+__pycache__/
+*.pyc
+
+vector_db/
+
+.venv/
+venv/
+
+*.bin
+*.npy
+
+test_gemini.py
+practice_app.py
+requirements.txt.txt
