@@ -16,9 +16,7 @@ import google.generativeai as genai
 # CONSTANTS
 # =========================
 
-VECTOR_DB_PATH = "vector_db/faiss_index.bin"
-CHUNKS_PATH = "vector_db/chunks.npy"
-SOURCES_PATH = "vector_db/chunk_sources.npy"
+
 
 PDF_FOLDER = "data"
 
@@ -50,33 +48,7 @@ model = SentenceTransformer(
 
 def load_or_create_vector_db():
 
-    '''# Load existing vector database
-    if (
-        os.path.exists(VECTOR_DB_PATH)
-        and os.path.exists(CHUNKS_PATH)
-        and os.path.exists(SOURCES_PATH)
-    ):
-
-        print("\nLoading Existing Vector Database...")
-
-        index = faiss.read_index(
-            VECTOR_DB_PATH
-        )
-
-        chunks = np.load(
-            CHUNKS_PATH,
-            allow_pickle=True
-        ).tolist()
-
-        chunk_sources = np.load(
-            SOURCES_PATH,
-            allow_pickle=True
-        ).tolist()
-
-        print("Vector Database Loaded!")
-        print("Vectors Stored:", index.ntotal)
-
-        return index, chunks, chunk_sources'''
+    
 
     # Create new vector database
     print("\nCreating New Vector Database...")
@@ -143,34 +115,10 @@ def load_or_create_vector_db():
         "Vectors Stored:",
         index.ntotal
     )
-
-   ''' # Save FAISS
-    faiss.write_index(
-        index,
-        VECTOR_DB_PATH
-    )
-
-    # Save chunks
-    np.save(
-        CHUNKS_PATH,
-        np.array(
-            chunks,
-            dtype=object
-        )
-    )
-
-    # Save sources
-    np.save(
-        SOURCES_PATH,
-        np.array(
-            chunk_sources,
-            dtype=object
-        )
-    )
-
-    print("\nVector Database Saved!")'''
-
     return index, chunks, chunk_sources
+
+
+
 # =========================
 # RETRIEVE RELEVANT CHUNKS
 # =========================
