@@ -1,37 +1,12 @@
 # =========================
 # IMPORT LIBRARIES
 # =========================
-
-import os
 import faiss
 import numpy as np
-from pypdf import PdfReader
 from sentence_transformers import SentenceTransformer
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
 import google.generativeai as genai
-
-
-# =========================
-# CONSTANTS
-# =========================
-
-
-
-PDF_FOLDER = "data"
-
-
-# =========================
-# TEXT SPLITTER
-# =========================
-
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=500,
-    chunk_overlap=50
-)
-
-
-# =========================
+#
 # LOAD EMBEDDING MODEL
 # =========================
 
@@ -48,74 +23,30 @@ model = SentenceTransformer(
 
 def load_or_create_vector_db():
 
-    
+    print("Loading Vector Database...")
 
-    # Create new vector database
-    print("\nCreating New Vector Database...")
-
-    chunks = []
-    chunk_sources = []
-
-    for file in os.listdir(PDF_FOLDER):
-
-        if file.endswith(".pdf"):
-
-            print(f"Reading: {file}")
-
-            pdf_path = os.path.join(
-                PDF_FOLDER,
-                file
-            )
-
-            reader = PdfReader(pdf_path)
-
-            pdf_text = ""
-
-            for page in reader.pages:
-
-                page_text = page.extract_text()
-
-                if page_text:
-                    pdf_text += page_text + "\n"
-
-            pdf_chunks = splitter.split_text(
-                pdf_text
-            )
-
-            for chunk in pdf_chunks:
-
-                chunks.append(chunk)
-                chunk_sources.append(file)
-
-    print(f"\nTotal Chunks: {len(chunks)}")
-
-    embeddings = model.encode(
-        chunks
+    index = faiss.read_index(
+        "vector_db/faiss_index.bin"
     )
 
-    print(
-        "Embedding Shape:",
-        embeddings.shape
-    )
+    chunks = np.load(
+        "vector_db/chunks.npy",
+        allow_pickle=True
+    ).tolist()
 
-    dimension = embeddings.shape[1]
+    chunk_sources = np.load(
+        "vector_db/chunk_sources.npy",
+        allow_pickle=True
+    ).tolist()
 
-    index = faiss.IndexFlatL2(
-        dimension
-    )
+    print("Vector Database Loaded!")
+    print("Vectors Stored:", index.ntotal)
 
-    index.add(
-        np.array(
-            embeddings,
-            dtype=np.float32
-        )
+    return (
+        index,
+        chunks,
+        chunk_sources
     )
-
-    print(
-        "Vectors Stored:",
-        index.ntotal
-    )
-    return index, chunks, chunk_sources
 
 
 
