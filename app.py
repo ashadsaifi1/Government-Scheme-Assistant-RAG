@@ -50,7 +50,7 @@ model = SentenceTransformer(
 
 def load_or_create_vector_db():
 
-    # Load existing vector database
+    '''# Load existing vector database
     if (
         os.path.exists(VECTOR_DB_PATH)
         and os.path.exists(CHUNKS_PATH)
@@ -76,7 +76,7 @@ def load_or_create_vector_db():
         print("Vector Database Loaded!")
         print("Vectors Stored:", index.ntotal)
 
-        return index, chunks, chunk_sources
+        return index, chunks, chunk_sources'''
 
     # Create new vector database
     print("\nCreating New Vector Database...")
@@ -144,7 +144,7 @@ def load_or_create_vector_db():
         index.ntotal
     )
 
-    # Save FAISS
+   ''' # Save FAISS
     faiss.write_index(
         index,
         VECTOR_DB_PATH
@@ -168,7 +168,7 @@ def load_or_create_vector_db():
         )
     )
 
-    print("\nVector Database Saved!")
+    print("\nVector Database Saved!")'''
 
     return index, chunks, chunk_sources
 # =========================
