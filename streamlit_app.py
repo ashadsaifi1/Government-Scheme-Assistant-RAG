@@ -1,29 +1,50 @@
 import streamlit as st
+
 from app import (
     load_or_create_vector_db,
     retrieve_chunks,
     generate_answer
 )
 
-# Page Config
+
+# =========================================================
+# PAGE CONFIG
+# =========================================================
+
 st.set_page_config(
     page_title="Government Scheme Assistant",
     page_icon="🤖",
     layout="wide"
 )
 
-# Header
+
+# =========================================================
+# TITLE
+# =========================================================
+
 st.title("🤖 Government Scheme Assistant")
-st.caption("AI Powered RAG Chatbot using FAISS + Gemini")
+st.caption("AI-powered RAG chatbot using FAISS + Gemini")
 
-# Load DB only once
-@st.cache_resource
-def load_database():
-    return load_or_create_vector_db()
 
-index, chunks, chunk_sources = load_database()
+# =========================================================
+# LOAD DATABASE
+# =========================================================
 
-# Sidebar
+index, chunks, chunk_sources = load_or_create_vector_db()
+
+
+# =========================================================
+# CHAT HISTORY
+# =========================================================
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+
+# =========================================================
+# SIDEBAR
+# =========================================================
+
 with st.sidebar:
 
     st.header("📊 System Info")
@@ -39,42 +60,117 @@ with st.sidebar:
     )
 
     st.success("FAISS Loaded")
-    st.success("Gemini Connected")
+    st.success("Gemini Ready")
 
-# User Question
-question = st.text_input(
-    "Ask a Question",
-    placeholder="Example: What is PMMY?"
+    if st.button("🗑️ Clear Chat"):
+
+        st.session_state.messages = []
+
+        st.rerun()
+
+
+# =========================================================
+# DISPLAY PREVIOUS CHAT
+# =========================================================
+
+for message in st.session_state.messages:
+
+    with st.chat_message(message["role"]):
+
+        st.markdown(
+            message["content"]
+        )
+
+        # Show sources only for assistant messages
+        if (
+            message["role"] == "assistant"
+            and message.get("sources")
+        ):
+
+            with st.expander("📚 Sources"):
+
+                for source in message["sources"]:
+
+                    st.write(f"• {source}")
+
+
+# =========================================================
+# CHAT INPUT
+# =========================================================
+
+question = st.chat_input(
+    "Ask about a government scheme..."
 )
 
-# Search Button
-if st.button("🔍 Get Answer"):
 
-    if question.strip():
+# =========================================================
+# PROCESS QUESTION
+# =========================================================
 
-        with st.spinner("Searching documents..."):
+if question:
+
+    # -----------------------------------------------------
+    # Show user message
+    # -----------------------------------------------------
+
+    with st.chat_message("user"):
+
+        st.markdown(question)
+
+    # Save user message
+    st.session_state.messages.append(
+        {
+            "role": "user",
+            "content": question
+        }
+    )
+
+    # -----------------------------------------------------
+    # Generate answer
+    # -----------------------------------------------------
+
+    with st.chat_message("assistant"):
+
+        with st.spinner("🔍 Searching documents..."):
 
             retrieved_text, used_sources = retrieve_chunks(
                 question,
                 index,
                 chunks,
-                chunk_sources
+                chunk_sources,
+                chat_history=st.session_state.messages
             )
+
+        with st.spinner("🤖 Generating answer..."):
 
             answer = generate_answer(
                 question,
-                retrieved_text
+                retrieved_text,
+                chat_history=st.session_state.messages
             )
 
-        # Answer Section
-        st.subheader("📌 Answer")
-        st.write(answer)
+        st.markdown(answer)
 
-        # Sources Section
-        st.subheader("📚 Sources")
+        # -------------------------------------------------
+        # Sources
+        # -------------------------------------------------
 
-        for source in used_sources:
-            st.success(source)
+        if used_sources:
 
-    else:
-        st.warning("Please enter a question.")
+            with st.expander("📚 Sources"):
+
+                for source in used_sources:
+
+                    st.write(f"• {source}")
+
+    # -----------------------------------------------------
+    # Save assistant response
+    # -----------------------------------------------------
+
+    st.session_state.messages.append(
+        {
+            "role": "assistant",
+            "content": answer,
+            "sources": list(used_sources)
+        }
+    )
